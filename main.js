@@ -31,7 +31,8 @@ app.post("/coordinates", (req, res) => {
             const token = await getToken();
             let allSongs = await getAllSongs(descriptors, token);
             
-            res.json({songs: allSongs});
+            allSongs.sort((a, b) => {return a["index"]-b["index"];});
+            res.json({days: allSongs});
         }
         else {
             console.log(e);
@@ -44,8 +45,8 @@ app.post("/coordinates", (req, res) => {
 
 const getAllSongs = async (descriptors, token) => {
     const allPromises = [];
-    descriptors.map((forecast) => {
-        allPromises.push(searchForSongs(forecast, token));
+    descriptors.map((forecast, i) => {
+        allPromises.push(searchForSongs(forecast, i, token));
     });
     return Promise.all(allPromises);
 }
@@ -114,7 +115,7 @@ const getToken = () => {
     });
 }
 
-const searchForSongs = (term, token) => {
+const searchForSongs = (term, index, token) => {
     let the_headers = new Headers();
     the_headers.append("Authorization", `${token.token_type} ${token.access_token}`);
 
@@ -132,7 +133,7 @@ const searchForSongs = (term, token) => {
                 const ALBUM_COVER_300x300 = 1;
 
                 const data = e.tracks.items;
-                let songs = data.map((song) => {
+                let the_songs = data.map((song) => {
                     return {
                         name: song.name,
                         uri: song.uri,
@@ -140,7 +141,11 @@ const searchForSongs = (term, token) => {
                     };
                 });
 
-                resolve(songs);
+                resolve({
+                    songs: the_songs,
+                    index: index,
+                    forecast: term
+                });
                 return;
             }
         });
