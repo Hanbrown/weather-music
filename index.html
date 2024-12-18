@@ -6,9 +6,66 @@
     <title>Weather Songs</title>
 </head>
 <body>
-    <form action="/coordinates" method="post">
+    <form>
         <input type="text" id="address" name="address">
         <input id="submit" type="submit" value="Get Playlist">
     </form>
+
+    <table id="songTable">
+        <tr><th>Day</th><th>Song</th><th>Weather</th></tr>
+    </table>
+    <script src="https://sdk.scdn.co/spotify-player.js"></script>
+    <script>
+        const the_table = document.getElementById("songTable");
+
+        const populateSongs = (songs) => {
+            for (let i = 0; i < songs.length; i++) {
+                let row = document.createElement("tr");
+                let d = document.createElement("td");
+                d.innerHTML = songs[i].index;
+
+                let s = document.createElement("td");
+                s.innerHTML = songs[i].songs[0].name;
+
+                let f = document.createElement("td");
+                f.innerHTML = songs[i].forecast;
+
+                row.appendChild(d);
+                row.appendChild(s);
+                row.appendChild(f);
+
+                the_table.appendChild(row);
+            }
+        }
+
+        document.querySelector("#submit").addEventListener("click", (e) => {
+            e.preventDefault();
+
+            const data = new FormData();
+            data.append("address", document.getElementById("address").value);
+
+            fetch("/coordinates", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    address: document.getElementById("address").value,
+                }),
+            }).then((e) => {
+                return e.json();
+            }).then((e) => {
+                if (e.days) {
+                    populateSongs(e.days);
+                }
+                else {
+                    alert("Error");
+                }
+            }).catch((e) => {
+                console.log(e.message);
+            })
+        });
+        
+    </script>
 </body>
 </html>

@@ -2,16 +2,27 @@ import "dotenv/config";
 import express from "express";
 import fetch from "node-fetch";
 import path from "node:path";
+import cookieParser from "cookie-parser";
 
 const app = express();
+
+const SEC_TO_MSEC = 1000;
+
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
+app.use(cookieParser());
 
 app.get("/", (_, res) => {
     res.sendFile(path.resolve("index.html"));
 });
 
 app.post("/coordinates", (req, res) => {
+    if (! req.body.address) {
+        console.log(req.body);
+        res.status(400).json({status: 400, message: "An error occurred :("});
+        return;
+    }
+
     let address = req.body.address;
 
     // Prevent CRLF Attacks
@@ -28,18 +39,30 @@ app.post("/coordinates", (req, res) => {
 
             const uri = await getForecastUri(coordX, coordY);
             const descriptors = await getWeatherDescriptors(uri);
-            const token = await getToken();
-            let allSongs = await getAllSongs(descriptors, token);
             
+            // Create a cookie with the auth token -- prevents unnecessary API calls
+            let cookie = req.cookies.spotify_token;
+            if (cookie === undefined) {
+                const token = await getToken();
+                res.cookie("spotify_token", token, {maxAge: token.expires_in * SEC_TO_MSEC, httpOnly: true, sameSite: "strict"});
+            }
+
+            // Get the songs and sort by day
+            let allSongs = await getAllSongs(descriptors, cookie);
+            // console.log(cookie);
             allSongs.sort((a, b) => {return a["index"]-b["index"];});
-            res.json({days: allSongs});
+            res.json({days: allSongs, message: "Success", status: 200});
+
+            // DEBUG ONLY
+            // res.status(200).json({status: 200, message: "All good"});
         }
         else {
             console.log(e);
-            throw new Error("An Error occurred :(");
+            throw new Error("Census API Error");
         }
     }).catch((e) => {
-        res.json({error: e.message});
+        console.log(e);
+        res.status(400).json({message: "An Error occurred :("});
     });
 });
 
