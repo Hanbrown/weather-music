@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node main.js",
-    "dev": "nodemon main.js --trace-event-categories node.http,node.net.native,node.dns.native"
+    "dev": "nodemon main.js --trace-event-categories node.http,node.net.native,node.dns.native",
+    "debug": "nodemon main.js --inspect"
   },
   "author": "Pranav Rao",
   "license": "ISC",

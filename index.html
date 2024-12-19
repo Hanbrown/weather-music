@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Weather Songs</title>
+    <style>
+        img {
+            height: 100px;
+            width: 100px;
+        }
+    </style>
 </head>
 <body>
     <form>
@@ -18,6 +24,36 @@
     <script>
         const the_table = document.getElementById("songTable");
 
+        const prevBtnClick = () => {
+            
+        }
+        const nextBtnClick = () => {
+
+        }
+
+        const songToggle = (songs) => {
+            const container = document.createElement("div");
+
+            const album = document.createElement("img");
+            album.setAttribute("src", songs[0].image.url);
+
+            const title = document.createElement("label");
+            title.innerText = songs[0].name;
+            
+            const prevBtn = document.createElement("button");
+            prevBtn.innerText = "<";
+            prevBtn.addEventListener("click", prevBtnClick());
+            
+            const nextBtn = document.createElement("button");
+            nextBtn.innerText = ">";
+            nextBtn.addEventListener("click", nextBtnClick());
+
+            container.appendChild(album);
+            container.appendChild(title);
+
+            return container;
+        }
+
         const populateSongs = (songs) => {
             for (let i = 0; i < songs.length; i++) {
                 let row = document.createElement("tr");
@@ -25,7 +61,8 @@
                 d.innerHTML = songs[i].index;
 
                 let s = document.createElement("td");
-                s.innerHTML = songs[i].songs[0].name;
+                // s.innerHTML = songs[i].songs[0].name;
+                s.appendChild(songToggle(songs[i].songs));
 
                 let f = document.createElement("td");
                 f.innerHTML = songs[i].forecast;

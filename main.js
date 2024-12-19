@@ -17,6 +17,7 @@ app.get("/", (_, res) => {
 });
 
 app.post("/coordinates", (req, res) => {
+    console.log("Starting...");
     if (! req.body.address) {
         console.log(req.body);
         res.status(400).json({status: 400, message: "An error occurred :("});
@@ -45,12 +46,13 @@ app.post("/coordinates", (req, res) => {
             if (cookie === undefined) {
                 const token = await getToken();
                 res.cookie("spotify_token", token, {maxAge: token.expires_in * SEC_TO_MSEC, httpOnly: true, sameSite: "strict"});
+                cookie = token;
             }
 
             // Get the songs and sort by day
             let allSongs = await getAllSongs(descriptors, cookie);
-            // console.log(cookie);
             allSongs.sort((a, b) => {return a["index"]-b["index"];});
+            console.log("Done.");
             res.json({days: allSongs, message: "Success", status: 200});
 
             // DEBUG ONLY
