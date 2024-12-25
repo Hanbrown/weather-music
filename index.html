@@ -5,63 +5,246 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Weather Songs</title>
     <style>
+        body {
+            font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+        }
+
         img {
             height: 100px;
             width: 100px;
         }
+
+        .container {
+            position: absolute;
+            width: 95%; /* Prevents horizontal scroll on small screens */
+            display: flex;
+            flex-flow: row wrap;
+            justify-content: center;
+        }
+
+        .container div {
+            flex-grow: 7;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        tr {
+            width: 100%;
+            border: solid thin black;
+            background: whitesmoke;
+        }
+
+        tr.headers {
+            background: white;
+        }
+
+        th {
+            font-size: 25px;
+        }
+
+        td {
+            max-height: 100px;
+            font-size: 23px;
+            text-align: center;
+            align-items: center;
+        }
+
+        .toggle-td {
+            height: 100px;
+            align-items: left;
+            text-align: left;
+        }
+
+        .toggle-wrapper * {
+            display: inline;
+        }
+
+        .album-wrapper {
+            width: 100%;
+        }
+
+        img {
+            vertical-align: middle;
+        }
+
+        .show {
+            display: initial;
+        }
+        .hide {
+            display: none;
+        }
+
+        .toggle-wrapper span {
+            margin-left: 10px;
+        }
+
+        .next, .prev {
+            position: relative;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            color: whitesmoke;
+            background-color: rgb(45, 200, 55);
+            text-align: center;
+            border-style: none;
+            font-size: 23px;
+        }
+
+        .next {
+            float: left;
+            right: -98px;
+            bottom: -62px;
+        }
+
+        .prev {
+            float: left;
+            left: 72px;
+            bottom: -62px;
+        }
+
+        .next:hover, .prev:hover {
+            background-color: rgb(10, 100, 20);
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
-    <form>
-        <input type="text" id="address" name="address">
-        <input id="submit" type="submit" value="Get Playlist">
-    </form>
+    <div class="container">
+        <div></div>
+        <div>
+            <form>
+                <input type="text" id="address" name="address">
+                <input id="submit" type="submit" value="Get Playlist">
+            </form>
 
-    <table id="songTable">
-        <tr><th>Day</th><th>Song</th><th>Weather</th></tr>
-    </table>
+            <table id="songTable">
+                <tr class="headers"><th>Day</th><th>Song</th><th>Weather</th></tr>
+                <!-- <tr>
+                    <td>0</td>
+                    <td class="toggle-td">
+                        <div>
+                            <div class="toggle-wrapper show">
+                                <div class="album-wrapper">
+                                    <img src="https://picsum.photos/300" alt="sample 1">
+                                    <button class="prev" onclick="prevBtnClick(this);">&#60;</button>
+                                    <button class="next" onclick="nextBtnClick(this);">&#62;</button>
+                                </div>    
+                                <span>Template Song 1</span>
+                            </div>
+                            <div class="toggle-wrapper hide">
+                                <div class="album-wrapper">
+                                    <img src="https://picsum.photos/300" alt="sample 2">
+                                    <button class="prev" onclick="prevBtnClick(this);">&#60;</button>
+                                    <button class="next" onclick="nextBtnClick(this);">&#62;</button>
+                                </div>
+                                <span>Template Song 2</span>
+                            </div>
+                            <div class="toggle-wrapper hide">
+                                <div class="album-wrapper">
+                                    <img src="https://picsum.photos/300" alt="sample 3">
+                                    <button class="prev" onclick="prevBtnClick(this);">&#60;</button>
+                                    <button class="next" onclick="nextBtnClick(this);">&#62;</button>
+                                </div>
+                                <span>Template Song 3</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td>Cloudy or something, idk</td>
+                </tr> -->
+            </table>
+        </div>
+        <div></div>
+    </div>
     <script src="https://sdk.scdn.co/spotify-player.js"></script>
     <script>
         const the_table = document.getElementById("songTable");
 
-        const prevBtnClick = () => {
-            
-        }
-        const nextBtnClick = () => {
+        const prevBtnClick = (e) => {
+            if (!e.parentElement) {
+                e = e.originalTarget;
+            }
 
+            if (e.parentElement.parentElement.previousElementSibling) {
+                e.parentElement.parentElement.classList.remove("show");
+                e.parentElement.parentElement.classList.add("hide");
+                e.parentElement.parentElement.previousElementSibling.classList.add("show");
+                e.parentElement.parentElement.previousElementSibling.classList.remove("hide");
+            }
+        }
+        const nextBtnClick = (e) => {
+            if (!e.parentElement) {
+                e = e.originalTarget;
+            }
+
+            if (e.parentElement.parentElement.nextElementSibling) {
+                e.parentElement.parentElement.classList.remove("show")
+                e.parentElement.parentElement.classList.add("hide")
+                e.parentElement.parentElement.nextElementSibling.classList.add("show");
+                e.parentElement.parentElement.nextElementSibling.classList.remove("hide");
+            }
         }
 
         const songToggle = (songs) => {
-            const container = document.createElement("div");
+            const primary = document.createElement("div");
 
-            const album = document.createElement("img");
-            album.setAttribute("src", songs[0].image.url);
+            songs.map((song, i) => {
+                const container = document.createElement("div");
+                container.setAttribute("class", "toggle-wrapper");
+                
+                // Ensure only first song displays
+                if (i == 0) {
+                    container.classList.add("show");
+                } else {
+                    container.classList.add("hide");
+                }
 
-            const title = document.createElement("label");
-            title.innerText = songs[0].name;
-            
-            const prevBtn = document.createElement("button");
-            prevBtn.innerText = "<";
-            prevBtn.addEventListener("click", prevBtnClick());
-            
-            const nextBtn = document.createElement("button");
-            nextBtn.innerText = ">";
-            nextBtn.addEventListener("click", nextBtnClick());
+                const albumWrapper = document.createElement("div");
+                container.classList.add("album-wrapper");
 
-            container.appendChild(album);
-            container.appendChild(title);
+                const album = document.createElement("img");
+                album.setAttribute("alt", songs[i].name + " album cover");
+                album.setAttribute("src", songs[i].image.url);
+                
+                const prevBtn = document.createElement("button");
+                prevBtn.innerText = "<";
+                prevBtn.addEventListener("click", prevBtnClick);
+                prevBtn.setAttribute("class", "prev");
+                
+                const nextBtn = document.createElement("button");
+                nextBtn.innerText = ">";
+                nextBtn.addEventListener("click", nextBtnClick);
+                nextBtn.setAttribute("class", "next");
 
-            return container;
+                albumWrapper.appendChild(album);
+                albumWrapper.appendChild(prevBtn);
+                albumWrapper.appendChild(nextBtn);
+
+                const title = document.createElement("span");
+                title.innerText = songs[i].name;
+
+                container.appendChild(albumWrapper);
+                container.appendChild(title);
+
+                primary.appendChild(container);
+            });
+
+            return primary;
         }
 
         const populateSongs = (songs) => {
             for (let i = 0; i < songs.length; i++) {
                 let row = document.createElement("tr");
+                row.setAttribute("class", "songRow");
+
                 let d = document.createElement("td");
                 d.innerHTML = songs[i].index;
 
                 let s = document.createElement("td");
                 // s.innerHTML = songs[i].songs[0].name;
+                s.setAttribute("class", "toggle-td");
                 s.appendChild(songToggle(songs[i].songs));
 
                 let f = document.createElement("td");
@@ -75,11 +258,57 @@
             }
         }
 
+        let counter = 1;
+        const devOnly = () => {
+            const pic = [
+                {
+                    image: {
+                        url: "https://picsum.photos/300",
+                    },
+                    name: "Template Song 1"
+                },
+                {
+                    image: {
+                        url: "https://picsum.photos/300",
+                    },
+                    name: "Template Song 2"
+                },
+                {
+                    image: {
+                        url: "https://picsum.photos/300",
+                    },
+                    name: "Template Song 3"
+                }
+            ];
+
+            let row = document.createElement("tr");
+            let d = document.createElement("td");
+            d.innerHTML = counter++;
+
+            let s = document.createElement("td");
+            s.setAttribute("class", "toggle-td");
+            s.appendChild(songToggle(pic));
+
+            let f = document.createElement("td");
+            f.innerHTML = "Cloudy or something idk";
+
+            row.appendChild(d);
+            row.appendChild(s);
+            row.appendChild(f);
+
+            the_table.appendChild(row);
+        }
+
         document.querySelector("#submit").addEventListener("click", (e) => {
             e.preventDefault();
 
             const data = new FormData();
             data.append("address", document.getElementById("address").value);
+
+            const rowList = document.querySelectorAll("tr.songRow");
+            for (let i=0; i<rowList.length; i++) {
+                rowList[i].remove();
+            }
 
             fetch("/coordinates", {
                 method: "POST",
@@ -101,6 +330,7 @@
             }).catch((e) => {
                 console.log(e.message);
             })
+        //    devOnly();
         });
         
     </script>
