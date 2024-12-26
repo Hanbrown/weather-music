@@ -137,21 +137,23 @@ const getWeatherDescriptors = (uri) => {
 }
 
 const getToken = () => {
-    const the_body = new URLSearchParams();
-    the_body.append("grant_type", "client_credentials");
-    the_body.append("client_id", process.env.client_id);
-    the_body.append("client_secret", process.env.client_secret);
+    const authOptions = {
+        url: `https://accounts.spotify.com/api/token`,
+        method: 'POST',
+        headers: {
+            'Authorization': 'Basic ' + btoa(process.env.client_id + ':' + process.env.client_secret),
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: 'grant_type=client_credentials'
+    };
 
     return new Promise((resolve, reject) => {
-        fetch(`https://accounts.spotify.com/api/token`, {
-            method: "POST",
-            body: the_body
-        }).then((e) => {
+        fetch(authOptions.url, authOptions).then((e) => {
             return e.json();
         }).then((e) => {
             if (e.error) {
-                console.log(e);
-                throw new Error("Spotify token API Error");
+                // console.log(e);
+                throw new Error(e.error_description);
             }
             else {
                 // console.log("Token found");
