@@ -10,11 +10,12 @@ const SEC_TO_MSEC = 1000;
 const ERR_MSG = "An Error occurred :( Perhaps try another address?";
 
 app.use(express.json());
+app.use(express.static("public"));
 app.use(express.urlencoded({extended: true}));
 app.use(cookieParser());
 
 app.get("/", (_, res) => {
-    res.sendFile(path.resolve("index.html"));
+    res.sendFile(path.resolve(__dirname, "public", "index.html"));
 });
 
 app.post("/coordinates", (req, res) => {
@@ -80,7 +81,7 @@ app.post("/coordinates", (req, res) => {
     }).catch((e) => {
         console.log(e);
         // console.log("Done.");
-        res.status(400).json({message: ERR_MSG});
+        res.status(400).json({status: 400, message: ERR_MSG});
     });
 });
 
