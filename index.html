@@ -9,6 +9,37 @@
             font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
         }
 
+        form {
+            border: solid thin black;
+            margin-bottom: 10px;
+            align-items: center;
+            align-content: center;
+            text-align: center;
+        }
+
+        #address {
+            border-style: solid;
+            height: 30px;
+            width: 650px;
+            font-size: 23px;
+            margin: 5px;
+            background-color: whitesmoke;
+        }
+
+        #submit {
+            border: solid thin green;
+            background-color: whitesmoke;
+            color: green;
+            font-size: 23px;
+        }
+        #submit:hover {
+            cursor: pointer;
+        }
+        #submit:active {
+            background-color: green;
+            color: whitesmoke;
+        }
+
         img {
             height: 100px;
             width: 100px;
@@ -116,7 +147,7 @@
         <div></div>
         <div>
             <form>
-                <input type="text" id="address" name="address">
+                <input type="text" id="address" name="address" placeholder="Enter a Valid US Street Address" autofocus required>
                 <input id="submit" type="submit" value="Get Playlist">
             </form>
 
@@ -325,11 +356,11 @@
                     populateSongs(e.days);
                 }
                 else {
-                    alert("Error");
+                    alert(e.message);
                 }
             }).catch((e) => {
                 console.log(e.message);
-            })
+            });
         //    devOnly();
         });
         

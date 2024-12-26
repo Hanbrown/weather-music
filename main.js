@@ -7,6 +7,7 @@ import cookieParser from "cookie-parser";
 const app = express();
 
 const SEC_TO_MSEC = 1000;
+const ERR_MSG = "An Error occurred :( Perhaps try another address?";
 
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
@@ -17,10 +18,11 @@ app.get("/", (_, res) => {
 });
 
 app.post("/coordinates", (req, res) => {
-    console.log("Starting...");
-    if (! req.body.address) {
+    // console.log("Starting...");
+    if ( Object.keys(req.body).length == 0 || !req.body.address.trim() ) {
         console.log(req.body);
-        res.status(400).json({status: 400, message: "An error occurred :("});
+        // console.log("Done.");
+        res.status(400).json({status: 400, message: "Please enter an address"});
         return;
     }
 
@@ -32,39 +34,53 @@ app.post("/coordinates", (req, res) => {
     fetch(`https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=${address}&benchmark=4&format=json`).then((e) => {
         return e.json();
     }).then(async (e) => {
-        if (e.result.addressMatches) {
+        if (e.status != "404" && e.result.addressMatches.length > 0) {
             const address = e.result.addressMatches[0].coordinates;
             const coordX = address.x;
             const coordY = address.y;
-            console.log("Location found");
+            // console.log("Location found");
 
             const uri = await getForecastUri(coordX, coordY);
+            // The API calls send back special error JSON objects -- if they're detected, stop the program
+            if (uri.error) {
+                throw new Error(uri.message);
+            }
             const descriptors = await getWeatherDescriptors(uri);
+            if (descriptors.error) {
+                throw new Error(descriptors.message);
+            }
             
             // Create a cookie with the auth token -- prevents unnecessary API calls
             let cookie = req.cookies.spotify_token;
             if (cookie === undefined) {
                 const token = await getToken();
+                if (token.error) {
+                    throw new Error(token.message);
+                }
                 res.cookie("spotify_token", token, {maxAge: token.expires_in * SEC_TO_MSEC, httpOnly: true, sameSite: "strict"});
                 cookie = token;
             }
 
             // Get the songs and sort by day
             let allSongs = await getAllSongs(descriptors, cookie);
+            if (allSongs.error) {
+                throw new Error(allSongs.message);
+            }
             allSongs.sort((a, b) => {return a["index"]-b["index"];});
-            console.log("Done.");
+            // console.log("Done.");
             res.json({days: allSongs, message: "Success", status: 200});
 
             // DEBUG ONLY
             // res.status(200).json({status: 200, message: "All good"});
         }
         else {
-            console.log(e);
-            throw new Error("Census API Error");
+            // console.log(JSON.stringify(e));
+            throw new Error(e.errors);
         }
     }).catch((e) => {
         console.log(e);
-        res.status(400).json({message: "An Error occurred :("});
+        // console.log("Done.");
+        res.status(400).json({message: ERR_MSG});
     });
 });
 
@@ -77,24 +93,26 @@ const getAllSongs = async (descriptors, token) => {
 }
 
 const getForecastUri = (x, y) => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         fetch(`https://api.weather.gov/points/${y},${x}`).then((e) => {
             return e.json();
         }).then((e) => {
             if (e.properties) {
-                console.log("Gridpoints found");
+                // console.log("Gridpoints found");
                 resolve(e.properties.forecast);
             }
             else {
-                console.log(e);
-                throw new Error("An Error occurred :(");
+                // console.log(e);
+                throw new Error(e.detail);
             }
+        }).catch((e) => {
+            reject({error: true, message: e.message});
         });
     });
 }
 
 const getWeatherDescriptors = (uri) => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         fetch(uri).then((e) => {
             return e.json();
         }).then((e) => {
@@ -104,13 +122,15 @@ const getWeatherDescriptors = (uri) => {
                     return datum.shortForecast;
                 });
 
-                console.log("Weather found");
+                // console.log("Weather found");
                 resolve(forecasts);
             }
             else {
                 console.log(e);
-                throw new Error("An Error occurred :(");
+                throw new Error("Weather API Error");
             }
+        }).catch((e) => {
+            reject({error: true, message: e.message});
         });
     });
 }
@@ -121,7 +141,7 @@ const getToken = () => {
     the_body.append("client_id", process.env.client_id);
     the_body.append("client_secret", process.env.client_secret);
 
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         fetch(`https://accounts.spotify.com/api/token`, {
             method: "POST",
             body: the_body
@@ -130,12 +150,14 @@ const getToken = () => {
         }).then((e) => {
             if (e.error) {
                 console.log(e);
-                throw new Error("An Error occurred :(");
+                throw new Error("Spotify token API Error");
             }
             else {
-                console.log("Token found");
+                // console.log("Token found");
                 resolve(e);
             }
+        }).catch((e) => {
+            reject({error: true, message: e.message});
         });
     });
 }
@@ -144,15 +166,15 @@ const searchForSongs = (term, index, token) => {
     let the_headers = new Headers();
     the_headers.append("Authorization", `${token.token_type} ${token.access_token}`);
 
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         fetch(`https://api.spotify.com/v1/search?q=tag:${term}&type=track&market=US&limit=5`, {
             headers: the_headers
         }).then((e) => {
             return e.json();
         }).then((e) => {
             if (e.error) {
-                console.log(e);
-                throw new Error("An Error occurred :(");
+                console.log(e.error);
+                throw new Error(e.error.message);
             }
             else {
                 const ALBUM_COVER_300x300 = 1;
@@ -173,6 +195,8 @@ const searchForSongs = (term, index, token) => {
                 });
                 return;
             }
+        }).catch((e) => {
+            reject({error: true, message: e.message});
         });
     });
 }
